@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Бөлшектер Шебері | 5-сынып Математикасы</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Canvas Confetti Library -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            font-family: 'Nunito', sans-serif;
+        }
+        h1, h2, h3, .font-heading {
+            font-family: 'Fredoka', cursive, sans-serif;
+        }
+        
+        /* Тік математикалық бөлшек пішімі (Vertical Math Fraction Layout) */
+        .math-fraction {
+            display: inline-flex;
+            align-items: center;
+            vertical-align: middle;
+            font-weight: 700;
+            user-select: none;
+        }
+        .math-fraction .whole-part {
+            font-size: 1.6em;
+            margin-right: 0.35rem;
+            line-height: 1;
+            color: #1e293b;
+        }
+        .math-fraction .frac-stack {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 0 0.2rem;
+        }
+        .math-fraction .num {
+            border-bottom: 2.5px solid currentColor;
+            width: 100%;
+            text-align: center;
+            padding-bottom: 2px;
+            line-height: 1.1;
+        }
+        .math-fraction .den {
+            width: 100%;
+            text-align: center;
+            padding-top: 2px;
+            line-height: 1.1;
+        }
+
+        /* Карточкалар мен түймелердің стилі */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 2px solid #e2e8f0;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+        }
+        
+        .btn-interactive {
+            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .btn-interactive:hover {
+            transform: translateY(-2px) scale(1.02);
+        }
+        .btn-interactive:active {
+            transform: translateY(1px) scale(0.98);
+        }
+
+        /* SVG Пизза секцияларының анимациялары */
+        .slice-path {
+            transition: all 0.4s ease;
+            cursor: pointer;
+        }
+        .slice-path:hover {
+            filter: brightness(1.1);
+            transform: scale(1.02);
+            transform-origin: center;
+        }
+
+        .pulse-badge {
+            animation: pulse-ring 2s infinite;
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(99, 102, 241, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col justify-between selection:bg-indigo-500 selection:text-white">
+
+    <!-- Жоғарғы Навигациялық Панель -->
+    <header class="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-3 sm:px-6 flex flex-wrap justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="bg-white/20 p-2.5 rounded-2xl backdrop-blur-md">
+                    <svg class="w-8 h-8 text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m-6 4h6m-6 4h6M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold tracking-wide">Бөлшек Шебері</h1>
+                    <p class="text-xs text-indigo-100 font-medium">5-сынып Математикасы • Интерактивті Зертхана</p>
+                </div>
+            </div>
+
+            <!-- Навигациялық түймелер -->
+            <nav class="flex flex-wrap gap-2 text-sm font-semibold">
+                <button onclick="switchTab('visual')" id="nav-visual" class="tab-btn px-4 py-2 rounded-xl bg-white/20 hover:bg-white/30 transition text-white backdrop-blur-sm flex items-center gap-1.5 shadow-sm">
+                    🍕 <span>Визуалды Модель</span>
+                </button>
+                <button onclick="switchTab('calculator')" id="nav-calculator" class="tab-btn px-4 py-2 rounded-xl bg-white/10 hover:bg-white/30 transition text-white backdrop-blur-sm flex items-center gap-1.5">
+                    🧮 <span>Ортақ Бөлім (ЕКОЕ)</span>
+                </button>
+                <button onclick="switchTab('compare')" id="nav-compare" class="tab-btn px-4 py-2 rounded-xl bg-white/10 hover:bg-white/30 transition text-white backdrop-blur-sm flex items-center gap-1.5">
+                    ⚖️ <span>Салыстыру</span>
+                </button>
+                <button onclick="switchTab('game')" id="nav-game" class="tab-btn px-4 py-2 rounded-xl bg-yellow-400 text-slate-900 hover:bg-yellow-300 transition font-bold flex items-center gap-1.5 shadow-md">
+                    🎮 <span>Тренажер Ойын</span>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Негізгі Мазмұн Аймағы -->
+    <main class="max-w-7xl mx-auto px-4 py-6 sm:px-6 flex-grow w-full">
+
+        <!-- 1-МОДУЛЬ: ВИЗУАЛДЫ МОДЕЛЬДЕУ -->
+        <section id="module-visual" class="tab-content block space-y-6">
+            <div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-3xl p-6 text-white shadow-xl relative overflow-hidden">
+                <div class="relative z-10">
+                    <h2 class="text-2xl sm:text-3xl font-bold mb-2">Визуалды Бөлшектер Интерактиві</h2>
+                    <p class="text-indigo-100 max-w-3xl">
+                        Бөлшекті ортақ бөлімге келтіру дегеніміз — олардың тілімдерін (бөліктерін) бірдей көлемге бөлу. Бөлімдерін өзгерткенде пицца тілімдерінің қалай көбейетінін бақылаңыз!
+                    </p>
+                </div>
+                <div class="absolute -right-10 -bottom-10 opacity-10 text-9xl font-bold select-none">🍕</div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Бөлшек A -->
+                <div class="glass-card rounded-3xl p-6 border border-slate-200 shadow-md">
+                    <div class="flex justify-between items-center mb-4 border-b pb-3">
+                        <span class="text-lg font-bold text-indigo-600">1-ші Бөлшек (А)</span>
+                        <div id="vis-frac-1-display" class="text-2xl text-indigo-700"></div>
+                    </div>
+
+                    <div class="space-y-4 mb-6">
+                        <div>
+                            <div class="flex justify-between text-sm font-semibold mb-1">
+                                <span>Алымы: <span id="v1-num-val" class="text-indigo-600 font-bold">1</span></span>
+                            </div>
+                            <input type="range" id="v1-num" min="1" max="12" value="1" class="w-full accent-indigo-600 cursor-pointer">
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-sm font-semibold mb-1">
+                                <span>Бөлімі: <span id="v1-den-val" class="text-indigo-600 font-bold">2</span></span>
+                            </div>
+                            <input type="range" id="v1-den" min="1" max="12" value="2" class="w-full accent-indigo-600 cursor-pointer">
+                        </div>
+                    </div>
+
+                    <!-- SVG Графика A -->
+                    <div class="flex flex-col items-center justify-center p-4 bg-slate-50 rounded-2xl border">
+                        <svg id="svg-pie-1" class="w-48 h-48 drop-shadow-md" viewBox="0 0 200 200"></svg>
+                        <span id="vis-1-info" class="text-xs text-slate-500 font-semibold mt-2"></span>
+                    </div>
+                </div>
+
+                <!-- Бөлшек B -->
+                <div class="glass-card rounded-3xl p-6 border border-slate-200 shadow-md">
+                    <div class="flex justify-between items-center mb-4 border-b pb-3">
+                        <span class="text-lg font-bold text-pink-600">2-ші Бөлшек (Б)</span>
+                        <div id="vis-frac-2-display" class="text-2xl text-pink-700"></div>
+                    </div>
+
+                    <div class="space-y-4 mb-6">
+                        <div>
+                            <div class="flex justify-between text-sm font-semibold mb-1">
+                                <span>Алымы: <span id="v2-num-val" class="text-pink-600 font-bold">1</span></span>
+                            </div>
+                            <input type="range" id="v2-num" min="1" max="12" value="1" class="w-full accent-pink-600 cursor-pointer">
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-sm font-semibold mb-1">
+                                <span>Бөлімі: <span id="v2-den-val" class="text-pink-600 font-bold">3</span></span>
+                            </div>
+                            <input type="range" id="v2-den" min="1" max="12" value="3" class="w-full accent-pink-600 cursor-pointer">
+                        </div>
+                    </div>
+
+                    <!-- SVG Графика B -->
+                    <div class="flex flex-col items-center justify-center p-4 bg-slate-50 rounded-2xl border">
+                        <svg id="svg-pie-2" class="w-48 h-48 drop-shadow-md" viewBox="0 0 200 200"></svg>
+                        <span id="vis-2-info" class="text-xs text-slate-500 font-semibold mt-2"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ЕКОЕ Анимациялық Түйіндеме Бөлігі -->
+            <div class="glass-card rounded-3xl p-6 border border-indigo-100 bg-gradient-to-br from-indigo-50/50 to-purple-50/50 shadow-md">
+                <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div class="space-y-2">
+                        <span class="bg-indigo-600 text-white text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider">Ортақ Бөлім Табу</span>
+                        <h3 class="text-xl font-bold text-slate-800">Ең кіші ортақ бөлім (ЕКОЕ): <span id="visual-lcm" class="text-indigo-600 font-extrabold text-2xl">6</span></h3>
+                        <p class="text-sm text-slate-600">Екі бөлшек те ортақ бөлімге келтіріліп, бірдей бөлшектерге тілінді!</p>
+                    </div>
+                    <div class="flex items-center gap-6 bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+                        <div class="text-center">
+                            <span class="text-xs text-slate-500 font-semibold block mb-1">Жаңа А бөлшегі</span>
+                            <div id="vis-converted-1"></div>
+                        </div>
+                        <span class="text-2xl font-bold text-slate-400">vs</span>
+                        <div class="text-center">
+                            <span class="text-xs text-slate-500 font-semibold block mb-1">Жаңа Б бөлшегі</span>
+                            <div id="vis-converted-2"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2-МОДУЛЬ: ҚАДАМДЫҚ КАЛЬКУЛЯТОР -->
+        <section id="module-calculator" class="tab-content hidden space-y-6">
+            <div class="bg-gradient-to-r from-teal-500 to-emerald-600 rounded-3xl p-6 text-white shadow-xl">
+                <h2 class="text-2xl sm:text-3xl font-bold mb-2">Ортақ Бөлімге Келтіру Калькуляторы</h2>
+                <p class="text-emerald-100">Жай бөлшектерді ЕКОЕ арқылы ортақ бөлімге келтірудің толық математикалық қадамдары.</p>
+            </div>
+
+            <div class="glass-card rounded-3xl p-6 border border-slate-200 shadow-md">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                    <!-- Еңгізу формалары -->
+                    <div class="space-y-4">
+                        <h3 class="font-bold text-slate-700 text-lg border-b pb-2">Бөлшектерді Еңгізіңіз:</h3>
+                        
+                        <!-- 1-бөлшек еңгізу -->
+                        <div class="flex items-center space-x-3 bg-slate-50 p-3 rounded-2xl border">
+                            <span class="font-bold text-slate-600 text-sm">1-ші бөлшек:</span>
+                            <div class="flex flex-col items-center w-20">
+                                <input type="number" id="c1-num" value="3" min="1" max="99" class="w-full text-center border-2 border-slate-300 rounded-lg py-1 font-bold focus:border-indigo-500 outline-none">
+                                <div class="w-full h-0.5 bg-slate-800 my-1"></div>
+                                <input type="number" id="c1-den" value="4" min="1" max="99" class="w-full text-center border-2 border-slate-300 rounded-lg py-1 font-bold focus:border-indigo-500 outline-none">
+                            </div>
+                        </div>
+
+                        <!-- 2-бөлшек еңгізу -->
+                        <div class="flex items-center space-x-3 bg-slate-50 p-3 rounded-2xl border">
+                            <span class="font-bold text-slate-600 text-sm">2-ші бөлшек:</span>
+                            <div class="flex flex-col items-center w-20">
+                                <input type="number" id="c2-num" value="5" min="1" max="99" class="w-full text-center border-2 border-slate-300 rounded-lg py-1 font-bold focus:border-indigo-500 outline-none">
+                                <div class="w-full h-0.5 bg-slate-800 my-1"></div>
+                                <input type="number" id="c2-den" value="6" min="1" max="99" class="w-full text-center border-2 border-slate-300 rounded-lg py-1 font-bold focus:border-indigo-500 outline-none">
+                            </div>
+                        </div>
+
+                        <button onclick="calculateStepByStep()" class="w-full btn-interactive bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-2xl shadow-lg flex items-center justify-center gap-2">
+                            <span>Кезең-кезеңімен шешу</span>
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+                        </button>
+                    </div>
+
+                    <!-- Нәтиже Аймағы -->
+                    <div id="calc-result" class="bg-slate-50 p-5 rounded-2xl border border-slate-200 min-h-[220px] flex flex-col justify-center">
+                        <p class="text-slate-400 text-center italic">Есептеу үшін «Кезең-кезеңімен шешу» батырмасын басыңыз...</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3-МОДУЛЬ: САЛЫСТЫРУ ЗЕРТХАНАСЫ -->
+        <section id="module-compare" class="tab-content hidden space-y-6">
+            <div class="bg-gradient-to-r from-amber-500 to-orange-600 rounded-3xl p-6 text-white shadow-xl">
+                <h2 class="text-2xl sm:text-3xl font-bold mb-2">Бөлшектер мен Аралас Сандарды Салыстыру</h2>
+                <p class="text-amber-100">Бүтін бөліктерін немесе алым-бөлімдерін ортақ бөлімге келтіру арқылы салыстырыңыз.</p>
+            </div>
+
+            <div class="glass-card rounded-3xl p-6 border border-slate-200 shadow-md">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-center text-center">
+                    
+                    <!-- 1-ші Сан -->
+                    <div class="bg-amber-50/50 p-5 rounded-3xl border border-amber-200 flex flex-col items-center">
+                        <span class="text-xs font-bold text-amber-700 uppercase mb-3">1-ші Сан</span>
+                        <div class="flex items-center gap-2 mb-4">
+                            <!-- Бүтін бөлігі -->
+                            <div class="flex flex-col items-center">
+                                <span class="text-xs text-slate-400 font-semibold">Бүтін</span>
+                                <input type="number" id="cmp1-w" value="1" min="0" max="20" class="w-14 text-center border-2 border-amber-300 rounded-lg py-1 font-bold text-lg">
+                            </div>
+                            <!-- Бөлшек бөлігі -->
+                            <div class="flex flex-col items-center">
+                                <span class="text-xs text-slate-400 font-semibold">Алымы</span>
+                                <input type="number" id="cmp1-n" value="3" min="1" max="99" class="w-14 text-center border-2 border-amber-300 rounded-lg py-1 font-bold text-lg">
+                                <div class="w-full h-0.5 bg-slate-800 my-1"></div>
+                                <input type="number" id="cmp1-d" value="4" min="1" max="99" class="w-14 text-center border-2 border-amber-300 rounded-lg py-1 font-bold text-lg">
+                            </div>
+                        </div>
+                        <div id="cmp-display-1" class="text-2xl font-bold text-slate-800"></div>
+                    </div>
+
+                    <!-- Салыстыру белгісі -->
+                    <div class="flex flex-col items-center justify-center space-y-3">
+                        <div id="cmp-sign" class="w-20 h-20 bg-amber-500 text-white rounded-full flex items-center justify-center text-4xl font-extrabold shadow-lg pulse-badge">
+                            ?
+                        </div>
+                        <button onclick="compareNumbers()" class="btn-interactive bg-amber-600 hover:bg-amber-700 text-white font-bold px-6 py-2.5 rounded-xl shadow-md text-sm">
+                            Салыстыру
+                        </button>
+                    </div>
+
+                    <!-- 2-ші Сан -->
+                    <div class="bg-amber-50/50 p-5 rounded-3xl border border-amber-200 flex flex-col items-center">
+                        <span class="text-xs font-bold text-amber-700 uppercase mb-3">2-ші Сан</span>
+                        <div class="flex items-center gap-2 mb-4">
+                            <!-- Бүтін бөлігі -->
+                            <div class="flex flex-col items-center">
+                                <span class="text-xs text-slate-400 font-semibold">Бүтін</span>
+                                <input type="number" id="cmp2-w" value="1" min="0" max="20" class="w-14 text-center border-2 border-amber-300 rounded-lg py-1 font-bold text-lg">
+                            </div>
+                            <!-- Бөлшек бөлігі -->
+                            <div class="flex flex-col items-center">
+                                <span class="text-xs text-slate-400 font-semibold">Алымы</span>
+                                <input type="number" id="cmp2-n" value="2" min="1" max="99" class="w-14 text-center border-2 border-amber-300 rounded-lg py-1 font-bold text-lg">
+                                <div class="w-full h-0.5 bg-slate-800 my-1"></div>
+                                <input type="number" id="cmp2-d" value="3" min="1" max="99" class="w-14 text-center border-2 border-amber-300 rounded-lg py-1 font-bold text-lg">
+                            </div>
+                        </div>
+                        <div id="cmp-display-2" class="text-2xl font-bold text-slate-800"></div>
+                    </div>
+                </div>
+
+                <!-- Ереже түсіндірмесі -->
+                <div id="cmp-explanation" class="mt-6 bg-slate-50 p-5 rounded-2xl border border-slate-200 text-left">
+                    <h4 class="font-bold text-slate-700 mb-2">Салыстыру Ережелері мен Қадамдары:</h4>
+                    <p class="text-sm text-slate-600 leading-relaxed">
+                        1. **Аралас сандарды салыстырғанда:** Бүтін бөліктері салыстырылады. Бүтін бөлігі үлкен сан — үлкен болады.<br>
+                        2. **Бүтін бөліктері бірдей болса:** Бөлшек бөліктері ортақ бөлімге келтіріліп, алымдары салыстырылады.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4-МОДУЛЬ: ИНТЕРАКТИВТІ ОЙЫН ТРЕНАЖЕР -->
+        <section id="module-game" class="tab-content hidden space-y-6">
+            <div class="bg-gradient-to-r from-purple-600 to-pink-600 rounded-3xl p-6 text-white shadow-xl flex flex-wrap justify-between items-center gap-4">
+                <div>
+                    <h2 class="text-2xl sm:text-3xl font-bold mb-1">🎮 «Бөлшек Шебері» Тренжеры</h2>
+                    <p class="text-purple-100 text-sm">Біліміңді тексер! Сұрақтарға жауап беріп, ұпай жина.</p>
+                </div>
+                <!-- Ұпайлар Панелі -->
+                <div class="flex gap-4">
+                    <div class="bg-white/20 backdrop-blur-md px-4 py-2 rounded-2xl text-center">
+                        <span class="text-xs text-purple-200 font-semibold block">Ұпай</span>
+                        <span id="game-score" class="text-2xl font-black text-yellow-300">0</span>
+                    </div>
+                    <div class="bg-white/20 backdrop-blur-md px-4 py-2 rounded-2xl text-center">
+                        <span class="text-xs text-purple-200 font-semibold block">Комбо (Streak)</span>
+                        <span id="game-streak" class="text-2xl font-black text-emerald-300">🔥 0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ойын Виджеті -->
+            <div class="glass-card rounded-3xl p-6 border border-slate-200 shadow-md relative overflow-hidden">
+                <!-- Сұрақ деңгейлерін таңдау -->
+                <div class="flex justify-center gap-2 mb-6">
+                    <button onclick="setGameLevel('easy')" id="lvl-easy" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-purple-600 text-white">Жай Бөлшектер</button>
+                    <button onclick="setGameLevel('medium')" id="lvl-medium" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-200 text-slate-700 hover:bg-slate-300">Аралас Сандар</button>
+                    <button onclick="setGameLevel('hard')" id="lvl-hard" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-200 text-slate-700 hover:bg-slate-300">Күрделі Тест</button>
+                </div>
+
+                <!-- Сұрақ Территриясы -->
+                <div id="quiz-container" class="max-w-xl mx-auto text-center space-y-6">
+                    <div class="text-slate-500 font-bold text-sm">Сұрақ: Кай белгі дұрыс?</div>
+                    
+                    <div class="flex justify-center items-center space-x-6 bg-slate-50 p-6 rounded-3xl border border-slate-200">
+                        <div id="q-frac-1" class="text-3xl font-bold"></div>
+                        <div class="text-3xl font-black text-purple-600">?</div>
+                        <div id="q-frac-2" class="text-3xl font-bold"></div>
+                    </div>
+
+                    <!-- Жауап Түймелері -->
+                    <div class="grid grid-cols-3 gap-4">
+                        <button onclick="submitAnswer('<')" class="btn-interactive py-4 bg-indigo-50 border-2 border-indigo-200 hover:bg-indigo-600 hover:text-white rounded-2xl text-3xl font-black transition">
+                            &lt;
+                        </button>
+                        <button onclick="submitAnswer('=')" class="btn-interactive py-4 bg-purple-50 border-2 border-purple-200 hover:bg-purple-600 hover:text-white rounded-2xl text-3xl font-black transition">
+                            =
+                        </button>
+                        <button onclick="submitAnswer('>')" class="btn-interactive py-4 bg-pink-50 border-2 border-pink-200 hover:bg-pink-600 hover:text-white rounded-2xl text-3xl font-black transition">
+                            &gt;
+                        </button>
+                    </div>
+
+                    <!-- Түсініктеме хабарламасы -->
+                    <div id="quiz-feedback" class="min-h-[40px] text-sm font-bold flex items-center justify-center rounded-xl p-2"></div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Төменгі Футер -->
+    <footer class="bg-slate-900 text-slate-400 text-center py-4 border-t border-slate-800 text-xs">
+        <p>© 2026 Бөлшек Шебері • 5-сынып Математикасы • Заманауи Оқыту Платформасы</p>
+    </footer>
+
+    <!-- Скриптер Логикасы -->
+    <script>
+        // --- ДЫБЫС ЭФФЕКТІЛЕРІ (Web Audio API) ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playSound(type) {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            if (type === 'correct') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+                osc.frequency.exponentialRampToValueAtTime(659.25, audioCtx.currentTime + 0.15); // E5
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.3);
+            } else if (type === 'wrong') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(220, audioCtx.currentTime); // A3
+                osc.frequency.exponentialRampToValueAtTime(146.83, audioCtx.currentTime + 0.2); // D3
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.3);
+            }
+        }
+
+        // --- МАТЕМАТИКАЛЫҚ ФУНКЦИЯЛАР ---
+        function gcd(a, b) {
+            return b === 0 ? a : gcd(b, a % b);
+        }
+
+        function lcm(a, b) {
+            return (a * b) / gcd(a, b);
+        }
+
+        // Рендерлеу: Тік Математикалық Бөлшек Форматы
+        function renderFraction(num, den, whole = 0) {
+            let html = `<div class="math-fraction">`;
+            if (whole > 0) {
+                html += `<span class="whole-part">${whole}</span>`;
+            }
+            if (num > 0 || whole === 0) {
+                html += `
+                    <div class="frac-stack">
+                        <span class="num">${num}</span>
+                        <span class="den">${den}</span>
+                    </div>
+                `;
+            }
+            html += `</div>`;
+            return html;
+        }
+
+        // --- НАВИГАЦИЯ ТАБТАРЫ ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(el => {
+                el.classList.remove('bg-white/30', 'shadow-md');
+                el.classList.add('bg-white/10');
+            });
+
+            document.getElementById(`module-${tabId}`).classList.remove('hidden');
+            const activeNav = document.getElementById(`nav-${tabId}`);
+            if (activeNav && tabId !== 'game') {
+                activeNav.classList.add('bg-white/30', 'shadow-md');
+            }
+        }
+
+        // --- 1-МОДУЛЬ: ВИЗУАЛДЫ МОДЕЛЬДЕР (SVG Pie Chart) ---
+        function drawPieSVG(elementId, num, den, colorHex) {
+            const svg = document.getElementById(elementId);
+            svg.innerHTML = '';
+            const cx = 100, cy = 100, r = 80;
+            
+            // Фондық шеңбер
+            const bgCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            bgCircle.setAttribute('cx', cx);
+            bgCircle.setAttribute('cy', cy);
+            bgCircle.setAttribute('r', r);
+            bgCircle.setAttribute('fill', '#f1f5f9');
+            bgCircle.setAttribute('stroke', '#cbd5e1');
+            bgCircle.setAttribute('stroke-width', '2');
+            svg.appendChild(bgCircle);
+
+            const sliceAngle = (360 / den);
+            
+            for (let i = 0; i < den; i++) {
+                const startAngle = i * sliceAngle - 90;
+                const endAngle = (i + 1) * sliceAngle - 90;
+
+                const x1 = cx + r * Math.cos(Math.PI * startAngle / 180);
+                const y1 = cy + r * Math.sin(Math.PI * startAngle / 180);
+                const x2 = cx + r * Math.cos(Math.PI * endAngle / 180);
+                const y2 = cy + r * Math.sin(Math.PI * endAngle / 180);
+
+                const largeArc = sliceAngle > 180 ? 1 : 0;
+                const pathData = `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z`;
+
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.setAttribute('d', pathData);
+                path.setAttribute('fill', i < num ? colorHex : '#ffffff');
+                path.setAttribute('stroke', '#475569');
+                path.setAttribute('stroke-width', '1.5');
+                path.setAttribute('class', 'slice-path');
+                svg.appendChild(path);
+            }
+        }
+
+        function updateVisualModule() {
+            const num1 = parseInt(document.getElementById('v1-num').value);
+            const den1 = parseInt(document.getElementById('v1-den').value);
+            const num2 = parseInt(document.getElementById('v2-num').value);
+            const den2 = parseInt(document.getElementById('v2-den').value);
+
+            // Мәндерді жаңарту
+            document.getElementById('v1-num-val').innerText = num1;
+            document.getElementById('v1-den-val').innerText = den1;
+            document.getElementById('v2-num-val').innerText = num2;
+            document.getElementById('v2-den-val').innerText = den2;
+
+            document.getElementById('vis-frac-1-display').innerHTML = renderFraction(num1, den1);
+            document.getElementById('vis-frac-2-display').innerHTML = renderFraction(num2, den2);
+
+            drawPieSVG('svg-pie-1', num1, den1, '#6366f1');
+            drawPieSVG('svg-pie-2', num2, den2, '#ec4899');
+
+            document.getElementById('vis-1-info').innerText = `${den1} бөліктің ${num1}-і боялған`;
+            document.getElementById('vis-2-info').innerText = `${den2} бөліктің ${num2}-і боялған`;
+
+            // ЕКОЕ Есептеу
+            const commonDen = lcm(den1, den2);
+            const mult1 = commonDen / den1;
+            const mult2 = commonDen / den2;
+            const newNum1 = num1 * mult1;
+            const newNum2 = num2 * mult2;
+
+            document.getElementById('visual-lcm').innerText = commonDen;
+            document.getElementById('vis-converted-1').innerHTML = renderFraction(newNum1, commonDen);
+            document.getElementById('vis-converted-2').innerHTML = renderFraction(newNum2, commonDen);
+        }
+
+        // Инпут слайдер оқиғалары
+        ['v1-num', 'v1-den', 'v2-num', 'v2-den'].forEach(id => {
+            document.getElementById(id).addEventListener('input', updateVisualModule);
+        });
+
+        // --- 2-МОДУЛЬ: КАЛЬКУЛЯТОР ---
+        function calculateStepByStep() {
+            const n1 = parseInt(document.getElementById('c1-num').value) || 1;
+            const d1 = parseInt(document.getElementById('c1-den').value) || 1;
+            const n2 = parseInt(document.getElementById('c2-num').value) || 1;
+            const d2 = parseInt(document.getElementById('c2-den').value) || 1;
+
+            const commonDen = lcm(d1, d2);
+            const mult1 = commonDen / d1;
+            const mult2 = commonDen / d2;
+
+            const resN1 = n1 * mult1;
+            const resN2 = n2 * mult2;
+
+            const resultContainer = document.getElementById('calc-result');
+            resultContainer.innerHTML = `
+                <div class="space-y-4 text-left">
+                    <div class="p-3 bg-white rounded-xl border border-emerald-200">
+                        <span class="font-bold text-xs text-emerald-600 uppercase block mb-1">1-қадам: Ең кіші ортақ бөлімді табу (ЕКОЕ)</span>
+                        <p class="text-sm font-semibold">ЕКОЕ(${d1}, ${d2}) = <span class="text-emerald-700 font-extrabold text-base">${commonDen}</span></p>
+                    </div>
+
+                    <div class="p-3 bg-white rounded-xl border border-emerald-200">
+                        <span class="font-bold text-xs text-emerald-600 uppercase block mb-1">2-қадам: Толықтауыш көбейткіштерді табу</span>
+                        <p class="text-sm">1-ші бөлшектің толықтауыш көбейткіші: ${commonDen} ÷ ${d1} = <b>${mult1}</b></p>
+                        <p class="text-sm">2-ші бөлшектің толықтауыш көбейткіші: ${commonDen} ÷ ${d2} = <b>${mult2}</b></p>
+                    </div>
+
+                    <div class="p-3 bg-emerald-100/50 rounded-xl border border-emerald-300">
+                        <span class="font-bold text-xs text-emerald-700 uppercase block mb-2">3-қадам: Нәтиже (Ортақ бөлімге келтірілді)</span>
+                        <div class="flex items-center gap-6 justify-center">
+                            <div class="flex items-center gap-2">
+                                ${renderFraction(n1, d1)} <span class="text-xs font-bold text-emerald-600">(${mult1})</span> = ${renderFraction(resN1, commonDen)}
+                            </div>
+                            <span class="font-bold text-slate-400">және</span>
+                            <div class="flex items-center gap-2">
+                                ${renderFraction(n2, d2)} <span class="text-xs font-bold text-emerald-600">(${mult2})</span> = ${renderFraction(resN2, commonDen)}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            playSound('correct');
+        }
+
+        // --- 3-МОДУЛЬ: САЛЫСТЫРУ ---
+        function compareNumbers() {
+            const w1 = parseInt(document.getElementById('cmp1-w').value) || 0;
+            const n1 = parseInt(document.getElementById('cmp1-n').value) || 0;
+            const d1 = parseInt(document.getElementById('cmp1-d').value) || 1;
+
+            const w2 = parseInt(document.getElementById('cmp2-w').value) || 0;
+            const n2 = parseInt(document.getElementById('cmp2-n').value) || 0;
+            const d2 = parseInt(document.getElementById('cmp2-d').value) || 1;
+
+            // Бөлшектерді санға айналдыру
+            const val1 = w1 + (n1 / d1);
+            const val2 = w2 + (n2 / d2);
+
+            let sign = '=';
+            if (val1 > val2) sign = '>';
+            else if (val1 < val2) sign = '<';
+
+            const signElem = document.getElementById('cmp-sign');
+            signElem.innerText = sign;
+
+            // Түсіндірме дайындау
+            const expDiv = document.getElementById('cmp-explanation');
+            let expText = '';
+
+            if (w1 !== w2) {
+                expText = `<b>Бүтін бөліктерін салыстырамыз:</b> 1-ші санның бүтіні (<b>${w1}</b>) мен 2-ші санның бүтіні (<b>${w2}</b>). `;
+                expText += w1 > w2 ? `Сондықтан 1-ші сан үлкен.` : `Сондықтан 2-ші сан үлкен.`;
+            } else {
+                const commonDen = lcm(d1, d2);
+                const newN1 = n1 * (commonDen / d1);
+                const newN2 = n2 * (commonDen / d2);
+                expText = `<b>Бүтін бөліктері тең (${w1}). Бөлшектерін ортақ бөлімге (${commonDen}) келтіреміз:</b><br>`;
+                expText += `1-ші бөлшек: ${renderFraction(newN1, commonDen)} | 2-ші бөлшек: ${renderFraction(newN2, commonDen)}.<br>`;
+                expText += `Алымдары салыстырылады: ${newN1} ${sign} ${newN2}.`;
+            }
+
+            expDiv.innerHTML = `<h4 class="font-bold text-amber-800 mb-1">Салыстыру нәтижесінің түсіндірмесі:</h4><p class="text-sm text-slate-700">${expText}</p>`;
+            
+            document.getElementById('cmp-display-1').innerHTML = renderFraction(n1, d1, w1);
+            document.getElementById('cmp-display-2').innerHTML = renderFraction(n2, d2, w2);
+            playSound('correct');
+        }
+
+        // --- 4-МОДУЛЬ: ТРЕНАЖЕР ОЙЫН ---
+        let currentQuiz = {};
+        let score = 0;
+        let streak = 0;
+        let gameLevel = 'easy';
+
+        function setGameLevel(lvl) {
+            gameLevel = lvl;
+            ['easy', 'medium', 'hard'].forEach(l => {
+                const btn = document.getElementById(`lvl-${l}`);
+                if (l === lvl) {
+                    btn.className = "px-3 py-1.5 rounded-xl text-xs font-bold bg-purple-600 text-white shadow";
+                } else {
+                    btn.className = "px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-200 text-slate-700 hover:bg-slate-300";
+                }
+            });
+            generateQuiz();
+        }
+
+        function generateQuiz() {
+            document.getElementById('quiz-feedback').innerHTML = '';
+            let w1 = 0, w2 = 0;
+            let n1 = 1, d1 = 2, n2 = 1, d2 = 3;
+
+            if (gameLevel === 'easy') {
+                d1 = Math.floor(Math.random() * 8) + 2;
+                d2 = Math.floor(Math.random() * 8) + 2;
+                n1 = Math.floor(Math.random() * (d1 - 1)) + 1;
+                n2 = Math.floor(Math.random() * (d2 - 1)) + 1;
+            } else if (gameLevel === 'medium') {
+                w1 = Math.floor(Math.random() * 3) + 1;
+                w2 = Math.floor(Math.random() * 3) + 1;
+                d1 = Math.floor(Math.random() * 6) + 2;
+                d2 = Math.floor(Math.random() * 6) + 2;
+                n1 = Math.floor(Math.random() * (d1 - 1)) + 1;
+                n2 = Math.floor(Math.random() * (d2 - 1)) + 1;
+            } else {
+                // Hard mode
+                w1 = Math.floor(Math.random() * 5);
+                w2 = Math.floor(Math.random() * 5);
+                d1 = Math.floor(Math.random() * 10) + 2;
+                d2 = Math.floor(Math.random() * 10) + 2;
+                n1 = Math.floor(Math.random() * 10) + 1;
+                n2 = Math.floor(Math.random() * 10) + 1;
+            }
+
+            const val1 = w1 + (n1 / d1);
+            const val2 = w2 + (n2 / d2);
+            let correctSign = '=';
+            if (val1 > val2) correctSign = '>';
+            else if (val1 < val2) correctSign = '<';
+
+            currentQuiz = { w1, n1, d1, w2, n2, d2, correctSign };
+
+            document.getElementById('q-frac-1').innerHTML = renderFraction(n1, d1, w1);
+            document.getElementById('q-frac-2').innerHTML = renderFraction(n2, d2, w2);
+        }
+
+        function submitAnswer(userSign) {
+            const feedback = document.getElementById('quiz-feedback');
+            if (userSign === currentQuiz.correctSign) {
+                score += 10 + (streak * 2);
+                streak += 1;
+                playSound('correct');
+                feedback.className = "min-h-[40px] text-sm font-bold flex items-center justify-center rounded-xl p-2 bg-emerald-100 text-emerald-700";
+                feedback.innerHTML = "🎉 Өте тамаша! Жауабың дұрыс!";
+
+                if (typeof confetti === 'function') {
+                    confetti({ particleCount: 40, spread: 60, origin: { y: 0.7 } });
+                }
+
+                setTimeout(generateQuiz, 1200);
+            } else {
+                streak = 0;
+                playSound('wrong');
+                feedback.className = "min-h-[40px] text-sm font-bold flex items-center justify-center rounded-xl p-2 bg-rose-100 text-rose-700";
+                feedback.innerHTML = `❌ Қателестіңіз. Дұрыс белгі: "${currentQuiz.correctSign}"`;
+            }
+
+            document.getElementById('game-score').innerText = score;
+            document.getElementById('game-streak').innerText = `🔥 ${streak}`;
+        }
+
+        // --- БЕТ ЖҮКТЕЛГЕНДЕ ІСКЕ ҚОСУ ---
+        window.onload = function() {
+            updateVisualModule();
+            calculateStepByStep();
+            compareNumbers();
+            generateQuiz();
+        };
+    </script>
+</body>
+</html>
